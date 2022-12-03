@@ -1,13 +1,20 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../Context/AuthProvider/AuthProvider';
 
 const Login = () => {
-    
-    const { signIn } = useContext(AuthContext);
+    const [error, setError] = useState();
+    const { signIn, setLoading } = useContext(AuthContext);
     const navigate = useNavigate();
+
+    const location = useLocation();
+    const from = location.state?.from?.pathname || '/';
+
+
+
     const handleSubmit = event => {
         event.preventDefault();
         const form = event.target;
@@ -18,10 +25,20 @@ const Login = () => {
                 const user = result.user;
                 console.log(user)
                 form.reset()
-                navigate('/')
+                setError('');
+                if (user.emailVerified) {
+                    navigate(from, { replace: true })
+                }
+                else {
+                    toast.error('Your email is not is varified')
+                }
             })
             .catch(error => {
-            console.error(error)
+                console.error(error)
+                setError(error.message);
+            })
+            .finally(() => {
+            setLoading(false)
         })
     }
 
@@ -38,8 +55,8 @@ const Login = () => {
             <Button variant="primary" type="submit">
                 Log In
             </Button>
-            <Form.Text className="text-muted">
-                We'll never share your email with anyone else.
+            <Form.Text className="text-danger">
+                {error}
             </Form.Text>
         </Form>
     );
